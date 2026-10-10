@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GEC Palanpur – Student Register</title>
+<link rel="icon" href="{{ url_for('static', filename='logo.svg') }}">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main>
+  <div class="letterhead">
+    <img src="{{ url_for('static', filename='image.png') }}" alt="Government Engineering College Palanpur crest">
+    <div>
+      <p class="institute">Government Engineering College Palanpur &middot; Estd. 2009</p>
+      <h1>Student Register</h1>
+    </div>
+  </div>
+  <div class="subrule"></div>
+  <p class="sub">First semester, 2026. Enter your temporary roll number below to open your record — batch, weekly timetable, and monthly attendance.</p>
+
+  <label for="roll" class="field-label">Roll number</label>
+  <input id="roll" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="CE01" aria-describedby="hint">
+  <p class="hint" id="hint">Try <button data-n="C01">C01</button><button data-n="CE01">CE01</button><button data-n="EE01">EE01</button><button data-n="ME01">ME01</button></p>
+
+  <div id="out" aria-live="polite"></div>
+  <p class="note">Batch list effective 16 September 2026. Timetable of the Humanities and Science Department, effective 1 August 2026 (term 1 July to 11 December 2026). Faculty are shown by their initials as printed on the timetable.</p>
+  <p class="note"><a href="{{ url_for('faculty_page') }}">Faculty login</a></p>
+  <p class="note motto">अभियान्त्रिकीज्ञानम् जनकल्याणम् — engineering knowledge for public welfare.</p>
+</main>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

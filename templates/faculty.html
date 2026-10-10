@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Faculty Portal – GEC Palanpur</title>
+<link rel="icon" href="{{ url_for('static', filename='logo.svg') }}">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='faculty.css') }}">
+</head>
+<body>
+<main id="app">
+  <div class="letterhead">
+    <img src="{{ url_for('static', filename='image.png') }}" alt="Government Engineering College Palanpur crest">
+    <div>
+      <p class="institute">Government Engineering College Palanpur &middot; Estd. 2009</p>
+      <h1>Faculty Portal</h1>
+    </div>
+  </div>
+  <div class="subrule"></div>
+  <div id="view"></div>
+</main>
+<script src="{{ url_for('static', filename='faculty.js') }}"></script>
+</body>
+</html>

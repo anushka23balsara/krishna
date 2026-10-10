@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+college.db
+.secret_key
+faculty_passwords.txt
+.pytest_cache/
+*.code-workspace
