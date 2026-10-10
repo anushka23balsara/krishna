@@ -24,10 +24,19 @@ MIN_ATTENDANCE = 75  # percent required by the university
 DATA_DIR = os.environ.get("DATA_DIR") or ("/tmp" if os.environ.get("VERCEL") else BASE_DIR)
 
 
+APP_VERSION = "2026-10-10-neon-2"
+DB_URL = (os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
+          or os.environ.get("NEON_DATABASE_URL") or "").strip().strip('"').strip("'") or None
+
+
 def _load_secret_key():
-    """SECRET_KEY env var in production; otherwise a random key saved next to the database."""
+    """SECRET_KEY env var in production; otherwise a stable key derived from the database URL
+    (so every Vercel instance agrees), or a random key saved next to the local database."""
     if os.environ.get("SECRET_KEY"):
         return os.environ["SECRET_KEY"]
+    if DB_URL:
+        import hashlib
+        return hashlib.sha256(("gecp-session-v1:" + DB_URL).encode()).hexdigest()
     path = os.path.join(DATA_DIR, ".secret_key")
     try:
         with open(path, encoding="utf-8") as f:
@@ -43,7 +52,7 @@ app = Flask(__name__)
 app.secret_key = _load_secret_key()
 app.config.update(
     # Neon / any Postgres: set DATABASE_URL. Without it, a local SQLite file is used.
-    DATABASE_URL=os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL"),
+    DATABASE_URL=DB_URL,
     DATABASE=os.environ.get("DATABASE_PATH") or os.path.join(DATA_DIR, "college.db"),
     PASSWORD_FILE=os.environ.get("PASSWORD_FILE") or os.path.join(DATA_DIR, "faculty_passwords.txt"),
     SESSION_COOKIE_HTTPONLY=True,
@@ -782,19 +791,71 @@ def edit_timetable(code, timetable_id):
     return jsonify(ok=True)
 
 
+@app.route("/api/health")
+def health():
+    """Open /api/health on the live site to see which database it really uses (no secrets are shown)."""
+    from urllib.parse import urlparse
+    info = {
+        "version": APP_VERSION,
+        "running_on_vercel": bool(os.environ.get("VERCEL")),
+        "database": "postgres" if app.config.get("DATABASE_URL") else "sqlite (local file)",
+        "database_host": urlparse(app.config["DATABASE_URL"]).hostname if app.config.get("DATABASE_URL") else None,
+        "secret_key_from_env": bool(os.environ.get("SECRET_KEY")),
+    }
+    if info["running_on_vercel"] and not app.config.get("DATABASE_URL"):
+        info["problem"] = "DATABASE_URL is not set on Vercel, so it uses a temporary database, not Neon."
+    try:
+        db = get_conn()
+        try:
+            q = lambda sql: db.execute(sql).fetchone()["n"]
+            info["students"] = q("SELECT COUNT(*) AS n FROM students")
+            info["faculty_logins"] = q("SELECT COUNT(*) AS n FROM teacher_auth")
+            info["logins_waiting_for_first_password_change"] = q("SELECT COUNT(*) AS n FROM teacher_auth WHERE must_change=1")
+        finally:
+            db.close()
+        info["database_ok"] = True
+    except Exception as e:  # show the reason, never the connection string
+        info["database_ok"] = False
+        msg = str(e).splitlines()[0] if str(e) else type(e).__name__
+        if app.config.get("DATABASE_URL"):
+            msg = msg.replace(app.config["DATABASE_URL"], "<DATABASE_URL>")
+        info["database_error"] = f"{type(e).__name__}: {msg}"[:300]
+    return jsonify(info)
+
+
 @app.errorhandler(500)
 def server_error(e):
     return bad("Something went wrong on the server.", 500)
 
 
 # Runs on import too, so gunicorn / Render / Vercel get a ready database (not only `python app.py`).
-init_db()
+try:
+    init_db()
+except Exception as e:  # keep the site up so /api/health can explain what's wrong
+    print("DATABASE SETUP FAILED:", type(e).__name__, str(e).splitlines()[0] if str(e) else "")
+    if __name__ == "__main__" and len(__import__("sys").argv) > 1:
+        raise
 
 if __name__ == "__main__":
     import sys
     if len(sys.argv) == 3 and sys.argv[1] == "reset-password":
         new_pw = reset_password(sys.argv[2])
         print(f"{sys.argv[2].upper()} one-time password: {new_pw}" if new_pw else "No such faculty code.")
+    elif len(sys.argv) == 2 and sys.argv[1] == "reset-all-passwords":
+        # New one-time password for every faculty member, saved to faculty_passwords.txt on THIS computer.
+        db = get_conn()
+        try:
+            codes = [r["code"] for r in db.execute("SELECT code FROM faculty ORDER BY code")]
+        finally:
+            db.close()
+        issued = [(c, reset_password(c)) for c in codes]
+        with open(app.config["PASSWORD_FILE"], "w", encoding="utf-8") as f:
+            f.write(f"# One-time faculty passwords issued {now_ist_str()} (hand out privately, then delete this file)\n")
+            f.writelines(f"{c}\t{pw}\n" for c, pw in issued)
+        for c, pw in issued:
+            print(f"{c:5} {pw}")
+        where = "Neon/Postgres" if app.config.get("DATABASE_URL") else app.config["DATABASE"]
+        print(f"\nReset {len(issued)} passwords in {where}. Also saved to {app.config['PASSWORD_FILE']}")
     elif len(sys.argv) == 2 and sys.argv[1] == "init-db":
         print("Database is ready.")   # init_db() already ran above
     else:
