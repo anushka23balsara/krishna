@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="GEC Palanpur">
+  <path d="M32 3 57 12v18c0 15-10.5 25.5-25 31C17.5 55.5 7 45 7 30V12z" fill="#1a1464"/>
+  <path d="M32 8 52 15v15c0 12-8.3 20.7-20 25.5C20.3 50.7 12 42 12 30V15z" fill="none" stroke="#c9a93f" stroke-width="2"/>
+  <text x="32" y="37" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="15" fill="#fff">GEC</text>
+  <text x="32" y="48" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="6.5" fill="#c9a93f" letter-spacing="1">PALANPUR</text>
+</svg>

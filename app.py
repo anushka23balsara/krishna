@@ -43,7 +43,7 @@ app = Flask(__name__)
 app.secret_key = _load_secret_key()
 app.config.update(
     # Neon / any Postgres: set DATABASE_URL. Without it, a local SQLite file is used.
-    DATABASE_URL=os.environ.get("DATABASE_URL") or os.environ.get("postgresql://neondb_owner:npg_txKOw3zJ1foE@ep-frosty-darkness-b5xhw9ea-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"),
+    DATABASE_URL=os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL"),
     DATABASE=os.environ.get("DATABASE_PATH") or os.path.join(DATA_DIR, "college.db"),
     PASSWORD_FILE=os.environ.get("PASSWORD_FILE") or os.path.join(DATA_DIR, "faculty_passwords.txt"),
     SESSION_COOKIE_HTTPONLY=True,
